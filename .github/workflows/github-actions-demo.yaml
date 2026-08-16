@@ -14,3 +14,9 @@ jobs:
 
       - name: Say hello
         run: echo "GitHub Actions is running!"
+
+      - name: Show runner information
+        run: |
+          echo "Runner OS: $env:RUNNER_OS"
+          git --version
+          node --version
