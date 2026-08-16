@@ -1,0 +1,11 @@
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  printusername:
+    runs-on: self-hosted
+
+    steps:
+    - name: Print the input name to STDOUT 
+      run: echo The username is ${{ inputs.username }}
