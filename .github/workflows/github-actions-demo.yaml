@@ -1,11 +1,16 @@
+name: First CI
+
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  printusername:
+  hello:
     runs-on: self-hosted
 
     steps:
-    - name: Print the input name to STDOUT 
-      run: echo The username is ${{ inputs.username }}
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Say hello
+        run: echo "GitHub Actions is running!"
