@@ -32,6 +32,12 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Check Terraform Files
+        run: |
+          pwd
+          ls -la
+          find . -maxdepth 3 -type f
+
       - name: Terraform Init
         run: terraform init
 
