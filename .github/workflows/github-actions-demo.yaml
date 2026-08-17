@@ -38,11 +38,17 @@ jobs:
           ls -la
           find . -maxdepth 3 -type f
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Terraform Init
+        working-directory: ./environments/dev
         run: terraform init
 
       - name: Terraform Validate
+        working-directory: ./environments/dev
         run: terraform validate
 
       - name: Terraform Plan
+        working-directory: ./environments/dev
         run: terraform plan
