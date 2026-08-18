@@ -15,9 +15,12 @@ env:
   subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   working-directory: ./environments/dev
 
+# concurrency:
+#   group: terraform-dev-${{ github.workflow }}
+#   cancel-in-progress: true
 
 jobs:
-  terraform:
+  terraform-job1:
     runs-on: ubuntu-latest
 
     steps:
@@ -44,17 +47,35 @@ jobs:
           ls -la
           find . -maxdepth 3 -type f
 
+  terraform-job2: 
+    needs: terraform-job1
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
+        
+  terraform-job3: 
+    needs: terraform-job2
+    runs-on: ubuntu-latest
+    steps:
       - name: Terraform Init
         working-directory: ${{ env.working-directory }}
         run: terraform init
 
+  terraform-job4: 
+    needs: terraform-job3
+    runs-on: ubuntu-latest
+    steps:     
       - name: Terraform Validate
         working-directory: ${{ env.working-directory }}
         run: terraform validate
 
+  terraform-job5: 
+    needs: terraform-job4
+    runs-on: ubuntu-latest
+    steps:   
       - name: Terraform Plan
         working-directory: ${{ env.working-directory }}
         run: terraform plan
