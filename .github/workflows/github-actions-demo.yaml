@@ -10,72 +10,171 @@ permissions:
   contents: read
 
 env:
-  client-id: ${{ secrets.AZURE_CLIENT_ID }}
-  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  working-directory: ./environments/dev
+  TERRAFORM_WORKING_DIR: ./environments/dev
 
-# concurrency:
-#   group: terraform-dev-${{ github.workflow }}
-#   cancel-in-progress: true
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: false
 
 jobs:
-  terraform-job1:
+
+  # =====================================================
+  # STAGE 1 - CHECKOUT
+  # =====================================================
+
+  checkout:
+    name: Stage 1 - Checkout
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+
+      - name: Upload Repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-source
+          path: .
+          retention-days: 1
+
+
+  # =====================================================
+  # STAGE 2 - TERRAFORM INIT
+  # =====================================================
+
+  terraform-init:
+    name: Stage 2 - Terraform Init
+    needs: checkout
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Download Repository
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-source
+          path: .
 
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ env.client-id }}
-          tenant-id: ${{ env.tenant-id }}
-          subscription-id: ${{ env.subscription-id }}
-
-      - name: Verify Azure Login
-        run: |
-          az account show
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Check Terraform Files
-        run: |
-          pwd
-          ls -la
-          find . -maxdepth 3 -type f
-
-  terraform-job2: 
-    needs: terraform-job1
-    runs-on: ubuntu-latest
-    continue-on-error: true
-
-    steps:
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        
-  terraform-job3: 
-    needs: terraform-job2
-    runs-on: ubuntu-latest
-    steps:
       - name: Terraform Init
-        working-directory: ${{ env.working-directory }}
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform init
 
-  terraform-job4: 
-    needs: terraform-job3
+
+  # =====================================================
+  # STAGE 3 - TERRAFORM VALIDATE
+  # =====================================================
+
+  terraform-validate:
+    name: Stage 3 - Terraform Validate
+    needs: terraform-init
     runs-on: ubuntu-latest
-    steps:     
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init
+
       - name: Terraform Validate
-        working-directory: ${{ env.working-directory }}
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: terraform validate
 
-  terraform-job5: 
-    needs: terraform-job4
+
+  # =====================================================
+  # STAGE 4 - TERRAFORM PLAN
+  # =====================================================
+
+  terraform-plan:
+    name: Stage 4 - Terraform Plan
+    needs: terraform-validate
     runs-on: ubuntu-latest
-    steps:   
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init
+
       - name: Terraform Plan
-        working-directory: ${{ env.working-directory }}
-        run: terraform plan
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform plan -out=tfplan
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: ${{ env.TERRAFORM_WORKING_DIR }}/tfplan
+          retention-days: 1
+
+
+  # =====================================================
+  # STAGE 5 - TERRAFORM APPLY
+  # =====================================================
+
+  terraform-apply:
+    name: Stage 5 - Terraform Apply
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+
+    # Production mein yahan environment approval laga sakte ho
+    environment:
+      name: production
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: ${{ env.TERRAFORM_WORKING_DIR }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform apply -auto-approve tfplan
