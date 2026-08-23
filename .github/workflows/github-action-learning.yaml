@@ -22,3 +22,15 @@ jobs:
         run: |
           echo "This is my first pipeline"
           echo "Runner is working successfully"
+
+      - name: Runner Information
+        run: |
+          echo "Operating System:"
+          uname -a
+
+          echo "Current Directory:"
+          pwd
+
+          echo "Files:"
+          ls -la
+
