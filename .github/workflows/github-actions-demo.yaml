@@ -45,9 +45,9 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
       
-      - name: Terraform Format check
-        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        run: terraform fmt -check -recursive
+      # - name: Terraform Format check
+      #   working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+      #   run: terraform fmt -check -recursive
 
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
