@@ -29,15 +29,22 @@ jobs:
 
       - name: Create File
         run: |
-          echo "This file was created by Job 1" > job1.txt
+          echo "This is file 1" > file1.txt
+          echo "This is file 2" > file2.txt
+          echo "This is file 3" > file3.txt
 
           echo "Job 1 files:"
           ls -la
+
       - name: Upload Job 1 File
         uses: actions/upload-artifact@v4
         with:
-          name: job1-file
-          path: job1.txt
+          name: my-files
+          path: |
+            file1.txt
+            file2.txt
+            file3.txt
+          retention-days: 1
 
 
   # =====================================
@@ -53,13 +60,18 @@ jobs:
       - name: Download Job 1 File
         uses: actions/download-artifact@v4
         with:
-          name: job1-file
+          name: my-files
 
-      - name: Check Job 1 File
+      - name: Verify files
         run: |
-          echo "Job 2 files:"
+          echo "Downloaded files:"
           ls -la
 
-          echo "Trying to read job1.txt..."
+          echo "File 1:"
+          cat file1.txt
 
-          cat job1.txt
+          echo "File 2:"
+          cat file2.txt
+
+          echo "File 3:"
+          cat file3.txt
