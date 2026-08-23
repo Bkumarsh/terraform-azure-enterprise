@@ -1,0 +1,24 @@
+name: GitHub Actions Learning
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Step 1
+        run: echo "Hello from GitHub Actions"
+
+      - name: Step 2
+        run: echo "I am learning CI/CD"
+
+      - name: Step 3
+        run: |
+          echo "This is my first pipeline"
+          echo "Runner is working successfully"
