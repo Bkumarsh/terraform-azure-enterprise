@@ -33,6 +33,11 @@ jobs:
 
           echo "Job 1 files:"
           ls -la
+      - name: Upload Job 1 File
+        uses: actions/upload-artifact@v4
+        with:
+          name: job1-file
+          path: job1.txt
 
 
   # =====================================
@@ -44,6 +49,11 @@ jobs:
     needs: build
 
     steps:
+
+      - name: Download Job 1 File
+        uses: actions/download-artifact@v4
+        with:
+          name: job1-file
 
       - name: Check Job 1 File
         run: |
