@@ -20,6 +20,18 @@ jobs:
 
     steps:
 
+      - name: Test GitHub Write Permission
+        run: |
+          echo "Testing write permission"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          echo "Testing permissions" > permission-test.txt
+
+          git add permission-test.txt
+          git commit -m "Test GitHub write permission"
+          git push
+
       - name: Step 1
         run: echo "Hello from GitHub Actions"
 
